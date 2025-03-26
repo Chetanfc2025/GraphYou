@@ -4,7 +4,7 @@ import numpy as np
 import math
 import pickle
 from PIL import Image
-import matplotlib.pyplot as plt
+
 
 # Load the trained SVM model
 with open('model.pkl', 'rb') as f:
@@ -39,6 +39,29 @@ if uploaded_file is not None:
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
         _, thresh = cv2.threshold(blurred, 120, 255, cv2.THRESH_BINARY_INV)
         return thresh
+
+    def estimate_baseline_angle(img):
+        """Estimate the baseline angle of the handwriting"""
+        edges = cv2.Canny(img, 50, 150)
+        lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=50, minLineLength=50, maxLineGap=10)
+
+        if lines is None:
+            return 0.0
+
+        angles = []
+        for line in lines:
+            x1, y1, x2, y2 = line[0]
+            angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
+            angles.append(angle)
+
+        baseline_angle = np.mean(angles) if angles else 0.0
+        return baseline_angle
+
+    def estimate_top_margin(img):
+        """Estimate the top margin of the handwriting"""
+        horizontal_proj = np.sum(img, axis=1)
+        top_margin_index = np.argmax(horizontal_proj > np.mean(horizontal_proj))
+        return top_margin_index / img.shape[0] if top_margin_index > 0 else 0.0
 
     def estimate_letter_size(img):
         """Simplified letter size estimation"""
@@ -86,6 +109,10 @@ if uploaded_file is not None:
 
     # Process the uploaded image
     processed_img = preprocess_image(image)
+
+    # Extract and calculate all features
+    features['baseline_angle'] = estimate_baseline_angle(processed_img)
+    features['top_margin'] = estimate_top_margin(processed_img)
     features['letter_size'] = estimate_letter_size(processed_img)
     features['line_spacing'] = estimate_line_spacing(processed_img)
     features['word_spacing'] = estimate_word_spacing(processed_img)
@@ -93,17 +120,31 @@ if uploaded_file is not None:
     features['slant_angle'] = estimate_slant_angle(processed_img)
 
     # Extract features for prediction
-    feature_values = [features['letter_size'], features['line_spacing'], features['word_spacing'],
-                      features['pen_pressure'], features['slant_angle']]
+    feature_values = [
+        features['baseline_angle'],
+        features['top_margin'],
+        features['letter_size'],
+        features['line_spacing'],
+        features['word_spacing'],
+        features['pen_pressure'],
+        features['slant_angle']
+    ]
 
-    # Make prediction using the SVM model
-    feature_values = np.array(feature_values).reshape(1, -1)
-    prediction = model.predict(feature_values)
+    # --- Debugging: Show feature shapes ---
+    st.write(f"Feature values: {feature_values}")
+    st.write(f"Model expects: {model.n_features_in_} features")
 
-    # --- Display Analysis Results ---
-    st.subheader("🔎 Handwriting Analysis Report")
-    for feature, value in features.items():
-        st.write(f"**{feature.replace('_', ' ').title()}**: {value:.2f}")
+    # Check if feature values match the expected shape
+    if len(feature_values) == model.n_features_in_:
+        feature_values = np.array(feature_values).reshape(1, -1)
+        prediction = model.predict(feature_values)
 
-    st.success(f"🎯 Predicted Personality: {prediction[0]}")
+        # --- Display Analysis Results ---
+        st.subheader("🔎 Handwriting Analysis Report")
+        for feature, value in features.items():
+            st.write(f"**{feature.replace('_', ' ').title()}**: {value:.2f}")
 
+        st.success(f"🎯 Predicted Personality: {prediction[0]}")
+
+    else:
+        st.error(f"⚠️ Feature shape mismatch! Model expects {model.n_features_in_} features, but got {len(feature_values)}.")
