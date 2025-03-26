@@ -6,7 +6,7 @@ import pickle
 from PIL import Image
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.special import expit  # For sigmoid transformation in linear SVM
+from scipy.special import expit
 
 # --- Load model and scaler ---
 with open('model.pkl', 'rb') as f:
@@ -38,53 +38,110 @@ personality_map = {
     }
 }
 
+# --- Feature Descriptions ---
+feature_descriptions = {
+    "baseline_angle": {
+        "low": "➡️ Slightly inclined writing suggests calm, stability, and control.",
+        "high": "↘️ Highly inclined writing indicates spontaneity, impulsiveness, or creativity."
+    },
+    "letter_size": {
+        "low": "🔍 Small letters suggest introversion, focus, and attention to detail.",
+        "high": "🌟 Large letters indicate outgoing nature, confidence, and expressiveness."
+    },
+    "line_spacing": {
+        "low": "👥 Closely spaced lines suggest high emotional intensity and impatience.",
+        "high": "⏰ Widely spaced lines indicate calmness, patience, and a relaxed attitude."
+    },
+    "word_spacing": {
+        "low": "🔒 Narrow word spacing suggests being reserved, cautious, and guarded.",
+        "high": "🚀 Wide word spacing indicates openness, sociability, and independence."
+    },
+    "pen_pressure": {
+        "low": "🪶 Light pressure shows sensitivity, empathy, and delicacy.",
+        "high": "⚡ Heavy pressure indicates determination, passion, and high emotional intensity."
+    },
+    "slant_angle": {
+        "low": "↖️ Left slant suggests introspection, emotional control, and independence.",
+        "high": "↘️ Right slant indicates expressiveness, sociability, and emotional openness."
+    }
+}
+
 # --- Preprocessing ---
 def preprocess_image(img):
-    """Convert to grayscale and apply thresholding"""
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     _, thresh = cv2.threshold(blurred, 120, 255, cv2.THRESH_BINARY_INV)
     return thresh
 
 # --- Feature Extraction ---
-def extract_all_features(image):
-    """Extract all handwriting features from the uploaded image"""
-    processed_img = preprocess_image(image)
+def estimate_baseline_angle(img):
+    edges = cv2.Canny(img, 50, 150)
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=50, minLineLength=50, maxLineGap=10)
+    angles = [math.degrees(math.atan2(y2 - y1, x2 - x1)) for line in lines for x1, y1, x2, y2 in line]
+    return np.mean(angles) if angles else 0.0
 
-    # Mock feature values (replace with actual extractions)
+def estimate_top_margin(img):
+    horizontal_proj = np.sum(img, axis=1)
+    top_margin_index = np.argmax(horizontal_proj > np.mean(horizontal_proj))
+    return top_margin_index / img.shape[0] if top_margin_index > 0 else 0.0
+
+def estimate_letter_size(img):
+    contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    heights = [cv2.boundingRect(ctr)[3] for ctr in contours if cv2.boundingRect(ctr)[3] > 10]
+    return np.mean(heights) if heights else 0
+
+def estimate_line_spacing(img):
+    horizontal_proj = np.sum(img, axis=1)
+    lines = np.where(horizontal_proj > np.mean(horizontal_proj))[0]
+    spacing = np.mean(np.diff(lines)) if len(lines) > 1 else 0
+    return spacing / estimate_letter_size(img) if estimate_letter_size(img) else 0
+
+def estimate_word_spacing(img):
+    vertical_proj = np.sum(img, axis=0)
+    words = np.where(vertical_proj > np.mean(vertical_proj))[0]
+    spacing = np.mean(np.diff(words)) if len(words) > 1 else 0
+    return spacing / estimate_letter_size(img) if estimate_letter_size(img) else 0
+
+def estimate_pen_pressure(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    inverted = 255 - gray
+    non_zero = inverted[inverted > 50]
+    return np.mean(non_zero) if non_zero.size > 0 else 0
+
+def estimate_slant_angle(img):
+    edges = cv2.Canny(img, 50, 150)
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=50, minLineLength=50, maxLineGap=10)
+    angles = [math.degrees(math.atan2(y2 - y1, x2 - x1)) for line in lines for x1, y1, x2, y2 in line]
+    return np.mean(angles) if angles else 0.0
+
+# --- Extract Features ---
+def extract_all_features(image):
+    processed_img = preprocess_image(image)
     features = {
-        'baseline_angle': np.random.uniform(-45, 45),   # Simulated baseline angle
-        'top_margin': np.random.uniform(0, 1),         # Normalized 0-1
-        'letter_size': np.random.uniform(10, 50),      # 10-50 pixels
-        'line_spacing': np.random.uniform(0.5, 2.0),   # Line spacing ratio
-        'word_spacing': np.random.uniform(0.5, 3.0),   # Word spacing ratio
-        'pen_pressure': np.random.uniform(50, 250),    # Pen pressure
-        'slant_angle': np.random.uniform(-60, 60)      # Slant angle
+        'baseline_angle': estimate_baseline_angle(processed_img),
+        'top_margin': estimate_top_margin(processed_img),
+        'letter_size': estimate_letter_size(processed_img),
+        'line_spacing': estimate_line_spacing(processed_img),
+        'word_spacing': estimate_word_spacing(processed_img),
+        'pen_pressure': estimate_pen_pressure(image),
+        'slant_angle': estimate_slant_angle(processed_img)
     }
-    
-    # Validate features for NaN or infinite values
     for key, val in features.items():
         if np.isnan(val) or np.isinf(val):
-            st.warning(f"⚠️ Invalid value for {key}. Using default 0.")
-            features[key] = 0  # Safe fallback
-
+            features[key] = 0
     return features
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="Graphology Analysis", layout="wide")
 st.title("📝 Enhanced Graphology Analysis using Machine Learning")
 
-# File Uploader
 uploaded_file = st.file_uploader("📤 Upload a handwriting sample (JPG, PNG)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
     image = np.array(Image.open(uploaded_file))
     st.image(image, caption="📸 Uploaded Handwriting Sample", use_column_width=True)
 
-    # Extract Features
     features = extract_all_features(image)
-
-    # Prepare Features for Prediction
     feature_values = np.array([[features['baseline_angle'],
                                 features['top_margin'],
                                 features['letter_size'],
@@ -92,40 +149,13 @@ if uploaded_file:
                                 features['word_spacing'],
                                 features['pen_pressure'],
                                 features['slant_angle']]])
-
-    # Apply Scaling
     scaled_features = scaler.transform(feature_values)
 
-    # --- Debugging Panel ---
-    with st.expander("🔍 Feature Debug"):
-        st.write("📊 Raw Feature Values:", features)
-        st.write("📈 Scaled Features:", scaled_features[0])
-
-        # Plot feature values as bar chart
-        fig, ax = plt.subplots()
-        pd.DataFrame(features, index=[0]).T.plot(kind='bar', ax=ax, legend=False)
-        ax.set_title("Extracted Feature Values")
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        st.pyplot(fig)
-
-    # --- Prediction ---
     prediction = model.predict(scaled_features)
-    
-    # Handling decision scores for linear SVM since `predict_proba` is unavailable
     decision_scores = model.decision_function(scaled_features)
-    probabilities = expit(decision_scores)  # Apply sigmoid to map to probability-like values
+    probabilities = expit(decision_scores)
 
-    # --- Personality Probability Chart ---
-    prob_df = pd.DataFrame({
-        "Personality": [personality_map[i]["name"] for i in range(5)],
-        "Probability": probabilities.flatten()
-    }).sort_values("Probability", ascending=False)
-
-    st.subheader("📊 Personality Prediction Probabilities")
-    st.bar_chart(prob_df.set_index("Personality"))
-
-    # --- Predicted Personality ---
+    # --- Personality Prediction ---
     pred_class = prediction[0]
     personality = personality_map.get(pred_class, {
         "name": "Unknown",
@@ -135,16 +165,35 @@ if uploaded_file:
     st.success(f"🎯 **Primary Personality:** {personality['name']}")
     st.write(personality['description'])
 
-    # --- Feature Explanations ---
-    st.subheader("✍️ Detailed Handwriting Characteristics")
+    # --- Detailed Analysis ---
+    st.subheader("✍️ Detailed Handwriting Characteristics with Descriptions")
     col1, col2 = st.columns(2)
 
     with col1:
         st.metric("📏 Baseline Angle", f"{features['baseline_angle']:.1f}°")
+        st.write(feature_descriptions["baseline_angle"]["low" if features['baseline_angle'] < 0 else "high"])
+
         st.metric("🔠 Letter Size", f"{features['letter_size']:.1f} px")
+        st.write(feature_descriptions["letter_size"]["low" if features['letter_size'] < 20 else "high"])
+
         st.metric("🔡 Word Spacing", f"{features['word_spacing']:.1f} ratio")
+        st.write(feature_descriptions["word_spacing"]["low" if features['word_spacing'] < 1 else "high"])
 
     with col2:
         st.metric("🖊️ Slant Angle", f"{features['slant_angle']:.1f}°")
+        st.write(feature_descriptions["slant_angle"]["low" if features['slant_angle'] < 0 else "high"])
+
         st.metric("💡 Pen Pressure", f"{features['pen_pressure']:.1f}")
+        st.write(feature_descriptions["pen_pressure"]["low" if features['pen_pressure'] < 150 else "high"])
+
         st.metric("📄 Line Spacing", f"{features['line_spacing']:.1f} ratio")
+        st.write(feature_descriptions["line_spacing"]["low" if features['line_spacing'] < 1 else "high"])
+
+    # --- Personality Probability Chart ---
+    prob_df = pd.DataFrame({
+        "Personality": [personality_map[i]["name"] for i in range(5)],
+        "Probability": probabilities.flatten()
+    }).sort_values("Probability", ascending=False)
+
+    st.subheader("📊 Personality Prediction Probabilities")
+    st.bar_chart(prob_df.set_index("Personality"))
