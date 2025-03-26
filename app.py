@@ -9,15 +9,28 @@ from PIL import Image
 with open('model.pkl', 'rb') as f:
     model = pickle.load(f)
 
-# Global variables for features
-features = {
-    'baseline_angle': 0.0,
-    'top_margin': 0.0,
-    'letter_size': 0.0,
-    'line_spacing': 0.0,
-    'word_spacing': 0.0,
-    'pen_pressure': 0.0,
-    'slant_angle': 0.0
+# Map class labels to personality types with detailed descriptions
+personality_map = {
+    0: {
+        "name": "Introverted & Thoughtful",
+        "description": "🧠 Prefers solitude, enjoys deep thinking, and is highly reflective. Takes time before making decisions and is more comfortable with smaller social circles."
+    },
+    1: {
+        "name": "Outgoing & Confident",
+        "description": "🎉 Sociable, enjoys engaging with others, and exudes confidence. Loves attention, thrives in social situations, and is comfortable being the center of attraction."
+    },
+    2: {
+        "name": "Creative & Expressive",
+        "description": "🎨 Imaginative, highly expressive, and values artistic expression. Enjoys exploring new ideas and thrives in creative environments."
+    },
+    3: {
+        "name": "Analytical & Detail-Oriented",
+        "description": "📊 Focused on precision, prefers logic over emotions, and excels at problem-solving. Pays close attention to detail and thrives in structured environments."
+    },
+    4: {
+        "name": "Empathetic & Compassionate",
+        "description": "❤️ Emotionally attuned, values deep connections, and is highly empathetic. Drawn toward helping others and forming strong emotional bonds."
+    }
 }
 
 # --- Streamlit UI ---
@@ -110,13 +123,15 @@ if uploaded_file is not None:
     processed_img = preprocess_image(image)
 
     # Extract and calculate all features
-    features['baseline_angle'] = estimate_baseline_angle(processed_img)
-    features['top_margin'] = estimate_top_margin(processed_img)
-    features['letter_size'] = estimate_letter_size(processed_img)
-    features['line_spacing'] = estimate_line_spacing(processed_img)
-    features['word_spacing'] = estimate_word_spacing(processed_img)
-    features['pen_pressure'] = estimate_pen_pressure(image)
-    features['slant_angle'] = estimate_slant_angle(processed_img)
+    features = {
+        'baseline_angle': estimate_baseline_angle(processed_img),
+        'top_margin': estimate_top_margin(processed_img),
+        'letter_size': estimate_letter_size(processed_img),
+        'line_spacing': estimate_line_spacing(processed_img),
+        'word_spacing': estimate_word_spacing(processed_img),
+        'pen_pressure': estimate_pen_pressure(image),
+        'slant_angle': estimate_slant_angle(processed_img)
+    }
 
     # Extract features for prediction
     feature_values = [
@@ -137,6 +152,9 @@ if uploaded_file is not None:
     if len(feature_values) == model.n_features_in_:
         feature_values = np.array(feature_values).reshape(1, -1)
         prediction = model.predict(feature_values)
+
+        # Map the prediction to a personality label
+        predicted_personality = personality_map.get(prediction[0], {"name": "Unknown Personality", "description": "❓ No matching personality found. Please check your input."})
 
         # --- Display Enhanced Analysis Results ---
         st.subheader("🔎 Enhanced Handwriting Analysis Report")
@@ -166,13 +184,11 @@ if uploaded_file is not None:
             st.progress(progress_value)
 
         # 🎭 Personality Insights Section
-        st.markdown("### 🎭 Personality Insights")
-        st.write("✅ **Outgoing & Confident:** Loves attention and enjoys social interaction.")
-        st.write("🤔 **Analytical & Logical:** Prefers thinking before making decisions.")
-        st.write("⚡️ **Determined & Passionate:** High emotional intensity and focus.")
-        st.write("❤️ **Strong Relationships:** Values emotional closeness and connection.")
+        st.subheader("🎭 Personality Insights")
+        st.write(f"✅ **{predicted_personality['name']}**")
+        st.write(f"{predicted_personality['description']}")
 
-        st.success(f"🎯 Predicted Personality: {prediction[0]}")
+        st.success(f"🎯 Predicted Personality: {predicted_personality['name']}")
 
     else:
         st.error(f"⚠️ Feature shape mismatch! Model expects {model.n_features_in_} features, but got {len(feature_values)}.")
