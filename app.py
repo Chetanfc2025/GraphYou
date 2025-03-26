@@ -81,19 +81,19 @@ if uploaded_file is not None:
         heights = [cv2.boundingRect(ctr)[3] for ctr in contours if cv2.boundingRect(ctr)[3] > 10]
         return np.mean(heights) if heights else 0
 
-    def estimate_line_spacing(img):
+    def estimate_line_spacing(img, letter_size):
         """Simplified line spacing estimation"""
         horizontal_proj = np.sum(img, axis=1)
         lines = np.where(horizontal_proj > np.mean(horizontal_proj))[0]
         spacing = np.mean(np.diff(lines)) if len(lines) > 1 else 0
-        return spacing / features['letter_size'] if features['letter_size'] else 0
+        return spacing / letter_size if letter_size else 0
 
-    def estimate_word_spacing(img):
+    def estimate_word_spacing(img, letter_size):
         """Simplified word spacing estimation"""
         vertical_proj = np.sum(img, axis=0)
         words = np.where(vertical_proj > np.mean(vertical_proj))[0]
         spacing = np.mean(np.diff(words)) if len(words) > 1 else 0
-        return spacing / features['letter_size'] if features['letter_size'] else 0
+        return spacing / letter_size if letter_size else 0
 
     def estimate_pen_pressure(img):
         """Simplified pen pressure estimation"""
@@ -123,12 +123,13 @@ if uploaded_file is not None:
     processed_img = preprocess_image(image)
 
     # Extract and calculate all features
+    letter_size = estimate_letter_size(processed_img)
     features = {
         'baseline_angle': estimate_baseline_angle(processed_img),
         'top_margin': estimate_top_margin(processed_img),
-        'letter_size': estimate_letter_size(processed_img),
-        'line_spacing': estimate_line_spacing(processed_img),
-        'word_spacing': estimate_word_spacing(processed_img),
+        'letter_size': letter_size,
+        'line_spacing': estimate_line_spacing(processed_img, letter_size),
+        'word_spacing': estimate_word_spacing(processed_img, letter_size),
         'pen_pressure': estimate_pen_pressure(image),
         'slant_angle': estimate_slant_angle(processed_img)
     }
