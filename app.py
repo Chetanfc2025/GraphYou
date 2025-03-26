@@ -8,6 +8,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.special import expit
 
+# --- Page Configuration (Must Be First) ---
+st.set_page_config(page_title="Graphology Analysis", layout="wide")
+
 # --- Custom CSS for Font Size ---
 st.markdown(
     """
@@ -26,7 +29,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- Load model and scaler ---
+# --- Load Model and Scaler ---
 with open('model.pkl', 'rb') as f:
     model = pickle.load(f)
 with open('scaler.pkl', 'rb') as f:
@@ -53,6 +56,7 @@ feature_descriptions = {
 
 # --- Preprocessing ---
 def preprocess_image(img):
+    """Convert to grayscale and apply thresholding."""
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     _, thresh = cv2.threshold(blurred, 120, 255, cv2.THRESH_BINARY_INV)
@@ -62,7 +66,7 @@ def preprocess_image(img):
 def estimate_baseline_angle(img):
     edges = cv2.Canny(img, 50, 150)
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=50, minLineLength=50, maxLineGap=10)
-    angles = [math.degrees(math.atan2(y2 - y1, x2 - x1)) for line in lines for x1, y1, x2, y2 in line]
+    angles = [math.degrees(math.atan2(y2 - y1, x2 - x1)) for line in lines for x1, y1, x2, y2 in line] if lines is not None else []
     return np.mean(angles) if angles else 0.0
 
 def estimate_top_margin(img):
@@ -79,13 +83,15 @@ def estimate_line_spacing(img):
     horizontal_proj = np.sum(img, axis=1)
     lines = np.where(horizontal_proj > np.mean(horizontal_proj))[0]
     spacing = np.mean(np.diff(lines)) if len(lines) > 1 else 0
-    return spacing / estimate_letter_size(img) if estimate_letter_size(img) else 0
+    letter_size = estimate_letter_size(img)
+    return spacing / letter_size if letter_size else 0
 
 def estimate_word_spacing(img):
     vertical_proj = np.sum(img, axis=0)
     words = np.where(vertical_proj > np.mean(vertical_proj))[0]
     spacing = np.mean(np.diff(words)) if len(words) > 1 else 0
-    return spacing / estimate_letter_size(img) if estimate_letter_size(img) else 0
+    letter_size = estimate_letter_size(img)
+    return spacing / letter_size if letter_size else 0
 
 def estimate_pen_pressure(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -96,7 +102,7 @@ def estimate_pen_pressure(img):
 def estimate_slant_angle(img):
     edges = cv2.Canny(img, 50, 150)
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=50, minLineLength=50, maxLineGap=10)
-    angles = [math.degrees(math.atan2(y2 - y1, x2 - x1)) for line in lines for x1, y1, x2, y2 in line]
+    angles = [math.degrees(math.atan2(y2 - y1, x2 - x1)) for line in lines for x1, y1, x2, y2 in line] if lines is not None else []
     return np.mean(angles) if angles else 0.0
 
 # --- Extract Features ---
@@ -117,7 +123,6 @@ def extract_all_features(image):
     return features
 
 # --- Streamlit UI ---
-st.set_page_config(page_title="Graphology Analysis", layout="wide")
 st.title("📝 Enhanced Graphology Analysis with Detailed Insights")
 
 uploaded_file = st.file_uploader("📤 Upload a handwriting sample (JPG, PNG)", type=["jpg", "jpeg", "png"])
