@@ -139,10 +139,21 @@ if uploaded_file is not None:
         feature_values = np.array(feature_values).reshape(1, -1)
         prediction = model.predict(feature_values)
 
-        # --- Display Analysis Results ---
-        st.subheader("🔎 Handwriting Analysis Report")
+        # --- Display Enhanced Analysis Results ---
+        st.subheader("🔎 Enhanced Handwriting Analysis Report")
+
+        # Enhanced feature display with progress bars
         for feature, value in features.items():
+            max_value = 200 if feature == 'pen_pressure' else 50 if feature in ['letter_size', 'baseline_angle', 'slant_angle'] else 1
             st.write(f"**{feature.replace('_', ' ').title()}**: {value:.2f}")
+            st.progress(min(value / max_value, 1.0))  # Cap progress at 1.0
+
+        # 🎭 Personality Insights Section
+        st.markdown("### 🎭 Personality Insights")
+        st.write("✅ **Outgoing & Confident:** Loves attention and enjoys social interaction.")
+        st.write("🤔 **Analytical & Logical:** Prefers thinking before making decisions.")
+        st.write("⚡️ **Determined & Passionate:** High emotional intensity and focus.")
+        st.write("❤️ **Strong Relationships:** Values emotional closeness and connection.")
 
         st.success(f"🎯 Predicted Personality: {prediction[0]}")
 
