@@ -8,6 +8,24 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.special import expit
 
+# --- Custom CSS for Font Size ---
+st.markdown(
+    """
+    <style>
+    body, p, label, div {
+        font-size: 18px !important;
+    }
+    h1, h2, h3 {
+        font-size: 24px !important;
+    }
+    .stMetric {
+        font-size: 20px !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # --- Load model and scaler ---
 with open('model.pkl', 'rb') as f:
     model = pickle.load(f)
@@ -16,54 +34,21 @@ with open('scaler.pkl', 'rb') as f:
 
 # --- Personality Mapping ---
 personality_map = {
-    0: {
-        "name": "Introverted & Thoughtful",
-        "description": "🧠 Prefers solitude, enjoys deep thinking, and is highly reflective. Takes time before making decisions and is more comfortable with smaller social circles."
-    },
-    1: {
-        "name": "Outgoing & Confident",
-        "description": "🎉 Sociable, enjoys engaging with others, and exudes confidence. Loves attention, thrives in social situations, and is comfortable being the center of attraction."
-    },
-    2: {
-        "name": "Creative & Expressive",
-        "description": "🎨 Imaginative, highly expressive, and values artistic expression. Enjoys exploring new ideas and thrives in creative environments."
-    },
-    3: {
-        "name": "Analytical & Detail-Oriented",
-        "description": "📊 Focused on precision, prefers logic over emotions, and excels at problem-solving. Pays close attention to detail and thrives in structured environments."
-    },
-    4: {
-        "name": "Empathetic & Compassionate",
-        "description": "❤️ Emotionally attuned, values deep connections, and is highly empathetic. Drawn toward helping others and forming strong emotional bonds."
-    }
+    0: {"name": "Introverted & Thoughtful", "description": "🧠 Prefers solitude, enjoys deep thinking, and is highly reflective."},
+    1: {"name": "Outgoing & Confident", "description": "🎉 Sociable, enjoys engaging with others, and exudes confidence."},
+    2: {"name": "Creative & Expressive", "description": "🎨 Imaginative, highly expressive, and values artistic expression."},
+    3: {"name": "Analytical & Detail-Oriented", "description": "📊 Focused on precision, prefers logic over emotions."},
+    4: {"name": "Empathetic & Compassionate", "description": "❤️ Emotionally attuned, values deep connections, and is highly empathetic."}
 }
 
 # --- Feature Descriptions ---
 feature_descriptions = {
-    "baseline_angle": {
-        "low": "➡️ Slightly inclined writing suggests calm, stability, and control.",
-        "high": "↘️ Highly inclined writing indicates spontaneity, impulsiveness, or creativity."
-    },
-    "letter_size": {
-        "low": "🔍 Small letters suggest introversion, focus, and attention to detail.",
-        "high": "🌟 Large letters indicate outgoing nature, confidence, and expressiveness."
-    },
-    "line_spacing": {
-        "low": "👥 Closely spaced lines suggest high emotional intensity and impatience.",
-        "high": "⏰ Widely spaced lines indicate calmness, patience, and a relaxed attitude."
-    },
-    "word_spacing": {
-        "low": "🔒 Narrow word spacing suggests being reserved, cautious, and guarded.",
-        "high": "🚀 Wide word spacing indicates openness, sociability, and independence."
-    },
-    "pen_pressure": {
-        "low": "🪶 Light pressure shows sensitivity, empathy, and delicacy.",
-        "high": "⚡ Heavy pressure indicates determination, passion, and high emotional intensity."
-    },
-    "slant_angle": {
-        "low": "↖️ Left slant suggests introspection, emotional control, and independence.",
-        "high": "↘️ Right slant indicates expressiveness, sociability, and emotional openness."
-    }
+    "baseline_angle": {"low": "➡️ Slightly inclined writing suggests calm, stability, and control.", "high": "↘️ Highly inclined writing indicates spontaneity, impulsiveness, or creativity."},
+    "letter_size": {"low": "🔍 Small letters suggest introversion, focus, and attention to detail.", "high": "🌟 Large letters indicate outgoing nature, confidence, and expressiveness."},
+    "line_spacing": {"low": "👥 Closely spaced lines suggest high emotional intensity and impatience.", "high": "⏰ Widely spaced lines indicate calmness, patience, and a relaxed attitude."},
+    "word_spacing": {"low": "🔒 Narrow word spacing suggests being reserved, cautious, and guarded.", "high": "🚀 Wide word spacing indicates openness, sociability, and independence."},
+    "pen_pressure": {"low": "🪶 Light pressure shows sensitivity, empathy, and delicacy.", "high": "⚡ Heavy pressure indicates determination, passion, and high emotional intensity."},
+    "slant_angle": {"low": "↖️ Left slant suggests introspection, emotional control, and independence.", "high": "↘️ Right slant indicates expressiveness, sociability, and emotional openness."}
 }
 
 # --- Preprocessing ---
@@ -133,7 +118,7 @@ def extract_all_features(image):
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="Graphology Analysis", layout="wide")
-st.title("📝 Enhanced Graphology Analysis using Machine Learning")
+st.title("📝 Enhanced Graphology Analysis with Detailed Insights")
 
 uploaded_file = st.file_uploader("📤 Upload a handwriting sample (JPG, PNG)", type=["jpg", "jpeg", "png"])
 
