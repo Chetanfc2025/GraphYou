@@ -145,10 +145,6 @@ if uploaded_file is not None:
         features['slant_angle']
     ]
 
-    # --- Debugging: Show feature shapes ---
-    st.write(f"Feature values: {feature_values}")
-    st.write(f"Model expects: {model.n_features_in_} features")
-
     # Check if feature values match the expected shape
     if len(feature_values) == model.n_features_in_:
         feature_values = np.array(feature_values).reshape(1, -1)
