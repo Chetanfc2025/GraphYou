@@ -5,7 +5,6 @@ import math
 import pickle
 from PIL import Image
 
-
 # Load the trained SVM model
 with open('model.pkl', 'rb') as f:
     model = pickle.load(f)
@@ -144,9 +143,27 @@ if uploaded_file is not None:
 
         # Enhanced feature display with progress bars
         for feature, value in features.items():
-            max_value = 200 if feature == 'pen_pressure' else 50 if feature in ['letter_size', 'baseline_angle', 'slant_angle'] else 1
+            # Define dynamic range for each feature
+            if feature == 'pen_pressure':
+                max_value = 255  # Pen pressure can go higher
+            elif feature == 'letter_size':
+                max_value = 100  # Letter size typically within 100
+            elif feature == 'baseline_angle' or feature == 'slant_angle':
+                max_value = 90  # Angles range from -90 to +90
+            elif feature in ['top_margin', 'line_spacing', 'word_spacing']:
+                max_value = 1.0  # Normalized between 0 and 1
+            else:
+                max_value = 50  # Safe fallback for unknowns
+
+            # Handle NaN or invalid values safely
+            if np.isnan(value) or np.isinf(value):
+                progress_value = 0.0
+            else:
+                # Safeguard progress value between 0 and 1.0
+                progress_value = min(max(value / max_value, 0.0), 1.0)
+
             st.write(f"**{feature.replace('_', ' ').title()}**: {value:.2f}")
-            st.progress(min(value / max_value, 1.0))  # Cap progress at 1.0
+            st.progress(progress_value)
 
         # 🎭 Personality Insights Section
         st.markdown("### 🎭 Personality Insights")
