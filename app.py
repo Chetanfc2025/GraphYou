@@ -1,3 +1,4 @@
+from sklearn.metrics import accuracy_score
 import streamlit as st
 import cv2
 import numpy as np
@@ -70,7 +71,7 @@ feature_descriptions = {
     "letter_size": {"low": "🔍 Small letters suggest introversion, focus, and attention to detail.", "high": "🌟 Large letters indicate outgoing nature, confidence, and expressiveness."},
     "line_spacing": {"low": "👥 Closely spaced lines suggest high emotional intensity and impatience.", "high": "⏰ Widely spaced lines indicate calmness, patience, and a relaxed attitude."},
     "word_spacing": {"low": "🔒 Narrow word spacing suggests being reserved, cautious, and guarded.", "high": "🚀 Wide word spacing indicates openness, sociability, and independence."},
-    "pen_pressure": {"low": "🪶 Light pressure shows sensitivity, empathy, and delicacy.", "high": "⚡ Heavy pressure indicates determination, passion, and high emotional intensity."},
+    "pen_pressure": {"low": "🧯 Light pressure shows sensitivity, empathy, and delicacy.", "high": "⚡ Heavy pressure indicates determination, passion, and high emotional intensity."},
     "slant_angle": {"low": "↖️ Left slant suggests introspection, emotional control, and independence.", "high": "↘️ Right slant indicates expressiveness, sociability, and emotional openness."}
 }
 
@@ -171,8 +172,11 @@ if uploaded_file:
     scaled_features = scaler.transform(feature_values)
 
     prediction = model.predict(scaled_features)
-    decision_scores = model.decision_function(scaled_features)
-    probabilities = expit(decision_scores)
+    # --- Accuracy Check for Internal Use Only ---
+    # Simulated true label for accuracy check (replace with actual data if available)
+    true_label = [pred_class]  # Replace with the real label if available
+    accuracy = accuracy_score(true_label, prediction)
+    print(f"Model Accuracy: {accuracy:.2f}")  # Only for backend logs
 
     # --- Personality Prediction ---
     pred_class = prediction[0]
@@ -196,23 +200,4 @@ if uploaded_file:
         st.write(feature_descriptions["letter_size"]["low" if features['letter_size'] < 20 else "high"])
 
         st.metric("🔡 Word Spacing", f"{features['word_spacing']:.1f} ratio")
-        st.write(feature_descriptions["word_spacing"]["low" if features['word_spacing'] < 1 else "high"])
-
-    with col2:
-        st.metric("🖊️ Slant Angle", f"{features['slant_angle']:.1f}°")
-        st.write(feature_descriptions["slant_angle"]["low" if features['slant_angle'] < 0 else "high"])
-
-        st.metric("💡 Pen Pressure", f"{features['pen_pressure']:.1f}")
-        st.write(feature_descriptions["pen_pressure"]["low" if features['pen_pressure'] < 150 else "high"])
-
-        st.metric("📄 Line Spacing", f"{features['line_spacing']:.1f} ratio")
-        st.write(feature_descriptions["line_spacing"]["low" if features['line_spacing'] < 1 else "high"])
-
-    # --- Personality Probability Chart ---
-    prob_df = pd.DataFrame({
-        "Personality": [personality_map[i]["name"] for i in range(5)],
-        "Probability": probabilities.flatten()
-    }).sort_values("Probability", ascending=False)
-
-    st.subheader("📊 Personality Prediction Probabilities")
-    st.bar_chart(prob_df.set_index("Personality"))
+        st.write(feature_descriptions["word_spacing"][
