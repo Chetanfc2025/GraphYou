@@ -8,8 +8,10 @@ from PIL import Image
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.special import expit
+
 # --- Page Configuration (Must Be First) ---
 st.set_page_config(page_title="Graphology Analysis", layout="wide")
+
 # --- Custom CSS for Enhanced UI ---
 st.markdown(
     """
@@ -36,6 +38,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 # --- Load Model and Scaler ---
 with open('model.pkl', 'rb') as f:
     model = pickle.load(f)
@@ -52,6 +55,7 @@ st.markdown(
     - 📸 **Upload a clear image** similar to the sample provided.
     """
 )
+
 # --- Personality Mapping ---
 personality_map = {
     0: {"name": "Introverted & Thoughtful", "description": "🧠 Prefers solitude, enjoys deep thinking, and is highly reflective."},
@@ -60,6 +64,7 @@ personality_map = {
     3: {"name": "Analytical & Detail-Oriented", "description": "📊 Focused on precision, prefers logic over emotions."},
     4: {"name": "Empathetic & Compassionate", "description": "❤️ Emotionally attuned, values deep connections, and is highly empathetic."}
 }
+
 # --- Feature Descriptions ---
 feature_descriptions = {
     "baseline_angle": {"low": "➡️ Slightly inclined writing suggests calm, stability, and control.", "high": "↘️ Highly inclined writing indicates spontaneity, impulsiveness, or creativity."},
@@ -200,7 +205,14 @@ if uploaded_file:
 
         st.metric("🧭 Slant Angle", f"{features['slant_angle']:.1f}°")
         st.write(feature_descriptions["slant_angle"]["low" if features['slant_angle'] < 45 else "high"])
-# Example usage to check accuracy (for internal testing only)
-if 'test_features' in locals() and 'test_labels' in locals():
-    evaluate_model_accuracy(model, scaler, test_features, test_labels)
 
+# --- Model Accuracy Evaluation ---
+def evaluate_model_accuracy(model, scaler, rfeature_list, label_list):
+    scaled_test_features = scaler.transform(rfeature_list)
+    predictions = model.predict(scaled_test_features)
+    accuracy = accuracy_score(label_list, predictions)
+    st.write(f"✅ Model Accuracy: {accuracy * 100:.2f}%")
+
+# Example usage to check accuracy (for internal testing only)
+if 'rfeature_list' in locals() and 'label_list' in locals():
+    evaluate_model_accuracy(model, scaler, rfeature_list, label_list)
