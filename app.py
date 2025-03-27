@@ -170,13 +170,7 @@ if uploaded_file:
                                 features['pen_pressure'],
                                 features['slant_angle']]])
     scaled_features = scaler.transform(feature_values)
-
     prediction = model.predict(scaled_features)
-    # --- Accuracy Check for Internal Use Only ---
-    # Simulated true label for accuracy check (replace with actual data if available)
-    true_label = [pred_class]  # Replace with the real label if available
-    accuracy = accuracy_score(true_label, prediction)
-    print(f"Model Accuracy: {accuracy:.2f}")  # Only for backend logs
 
     # --- Personality Prediction ---
     pred_class = prediction[0]
@@ -200,4 +194,14 @@ if uploaded_file:
         st.write(feature_descriptions["letter_size"]["low" if features['letter_size'] < 20 else "high"])
 
         st.metric("🔡 Word Spacing", f"{features['word_spacing']:.1f} ratio")
-        st.write(feature_descriptions["word_spacing"][
+        st.write(feature_descriptions["word_spacing"]["low" if features['word_spacing'] < 20 else "high"])
+
+    with col2:
+        st.metric("📚 Line Spacing", f"{features['line_spacing']:.1f} px")
+        st.write(feature_descriptions["line_spacing"]["low" if features['line_spacing'] < 20 else "high"])
+
+        st.metric("💪 Pen Pressure", f"{features['pen_pressure']:.1f}")
+        st.write(feature_descriptions["pen_pressure"]["low" if features['pen_pressure'] < 127 else "high"])
+
+        st.metric("🧭 Slant Angle", f"{features['slant_angle']:.1f}°")
+        st.write(feature_descriptions["slant_angle"]["low" if features['slant_angle'] < 45 else "high"])
