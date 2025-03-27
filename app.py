@@ -81,8 +81,60 @@ def preprocess_image(img):
     _, thresh = cv2.threshold(blurred, 120, 255, cv2.THRESH_BINARY_INV)
     return thresh
 
-# --- Feature Extraction (Same as Original) ---
+# --- Baseline Angle ---
+def estimate_baseline_angle(thresh):
+    edges = cv2.Canny(thresh, 50, 150, apertureSize=3)
+    lines = cv2.HoughLines(edges, 1, np.pi/180, 200)
+    angles = []
+    if lines is not None:
+        for line in lines:
+            rho, theta = line[0]
+            angle = (theta * 180 / np.pi) - 90
+            angles.append(angle)
+    return np.mean(angles) if angles else 0
 
+# --- Top Margin ---
+def estimate_top_margin(thresh):
+    rows = np.sum(thresh, axis=1)
+    top_margin = np.argmax(rows > 0)
+    return top_margin
+
+# --- Letter Size ---
+def estimate_letter_size(thresh):
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    heights = [cv2.boundingRect(c)[3] for c in contours]
+    return np.mean(heights) if heights else 0
+
+# --- Line Spacing ---
+def estimate_line_spacing(thresh):
+    rows = np.sum(thresh, axis=1)
+    line_indices = np.where(rows > 0)[0]
+    spacings = np.diff(line_indices)
+    return np.mean(spacings) if len(spacings) > 1 else 0
+
+# --- Word Spacing ---
+def estimate_word_spacing(thresh):
+    cols = np.sum(thresh, axis=0)
+    word_indices = np.where(cols > 0)[0]
+    spacings = np.diff(word_indices)
+    return np.mean(spacings) if len(spacings) > 1 else 0
+
+# --- Pen Pressure ---
+def estimate_pen_pressure(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    return np.mean(gray)
+
+# --- Slant Angle ---
+def estimate_slant_angle(thresh):
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    angles = []
+    for c in contours:
+        if len(c) >= 5:
+            _, _, angle = cv2.fitEllipse(c)
+            angles.append(angle)
+    return np.mean(angles) if angles else 0
+
+# --- Feature Extraction ---
 def extract_all_features(image):
     processed_img = preprocess_image(image)
     features = {
