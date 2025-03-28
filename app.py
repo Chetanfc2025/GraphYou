@@ -72,7 +72,7 @@ feature_descriptions = {
     "line_spacing": {"low": "👥 Closely spaced lines suggest high emotional intensity and impatience. ", "high": "⏰ Widely spaced lines indicate calmness, patience, and a relaxed attitude."},
     "word_spacing": {"low": "🔒 Narrow word spacing suggests being reserved, cautious, and guarded.This person always needs to be with someone and cannot be left alone", "high": "🚀 Wide word spacing indicates openness, sociability, and independence.Likes alone space of their own"},
     "pen_pressure": {"low": "🧯 Light pressure shows sensitivity, empathy, and delicacy. Low Emotional intensity, Think and takes decision Logically (With brain) rather than emotion (with heart)  ", "high": "⚡ Heavy pressure indicates determination, passion, and high emotional intensity.Think and takes decision emotion (with heart) rather than Logically (With brain)"},
-    "slant_angle": {"low": "↘️ Right slant suggests introspection, emotional control, and independence.", "high": " ↖️ Left slant indicates expressiveness, sociability, and emotional openness."}
+    "slant_angle": {"low": "↘️ Right slant suggests expressiveness, sociability, and emotional openness.", "high": " ↖️ Left slant indicates introspection, emotional control, and independence. "}
 }
 
 # --- Preprocessing ---
