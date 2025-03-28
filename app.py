@@ -68,11 +68,11 @@ personality_map = {
 # --- Feature Descriptions ---
 feature_descriptions = {
     "baseline_angle": {"low": "➡️ Slightly inclined writing suggests calm, stability, and control.", "high": "↘️ Highly inclined writing indicates spontaneity, impulsiveness, or creativity."},
-    "letter_size": {"low": "🔍 Small letters suggest introversion, focus, and attention to detail.", "high": "🌟 Large letters indicate outgoing nature, confidence, and expressiveness."},
-    "line_spacing": {"low": "👥 Closely spaced lines suggest high emotional intensity and impatience.", "high": "⏰ Widely spaced lines indicate calmness, patience, and a relaxed attitude."},
-    "word_spacing": {"low": "🔒 Narrow word spacing suggests being reserved, cautious, and guarded.", "high": "🚀 Wide word spacing indicates openness, sociability, and independence."},
-    "pen_pressure": {"low": "🧯 Light pressure shows sensitivity, empathy, and delicacy.", "high": "⚡ Heavy pressure indicates determination, passion, and high emotional intensity."},
-    "slant_angle": {"low": "↖️ Left slant suggests introspection, emotional control, and independence.", "high": "↘️ Right slant indicates expressiveness, sociability, and emotional openness."}
+    "letter_size": {"low": "🔍 Small letters suggest introversion, focus, and attention to detail.In Future can show tendency of being a follower", "high": "🌟 Large letters indicate outgoing nature, confidence, and expressiveness. Extrovert nature ,Tendency of becoming a leader"},
+    "line_spacing": {"low": "👥 Closely spaced lines suggest high emotional intensity and impatience. ", "high": "⏰ Widely spaced lines indicate calmness, patience, and a relaxed attitude."},
+    "word_spacing": {"low": "🔒 Narrow word spacing suggests being reserved, cautious, and guarded.This person always needs to be with someone and cannot be left alone", "high": "🚀 Wide word spacing indicates openness, sociability, and independence.Likes alone space of their own"},
+    "pen_pressure": {"low": "🧯 Light pressure shows sensitivity, empathy, and delicacy. Low Emotional intensity, Think and takes decision Logically (With brain) rather than emotion (with heart)  ", "high": "⚡ Heavy pressure indicates determination, passion, and high emotional intensity.Think and takes decision emotion (with heart) rather than Logically (With brain)"},
+    "slant_angle": {"low": "↘️ Right slant suggests introspection, emotional control, and independence.", "high": " ↖️ Left slant indicates expressiveness, sociability, and emotional openness."}
 }
 
 # --- Preprocessing ---
