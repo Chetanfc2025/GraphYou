@@ -81,37 +81,35 @@ import numpy as np
 import streamlit as st
 from PIL import Image
 
+import cv2
+import numpy as np
+import streamlit as st
+from PIL import Image
+
 def preprocess_image(uploaded_file):
-    # Ensure the uploaded file is valid
-    if uploaded_file is None:
-        raise ValueError("❌ Error: No image uploaded. Please upload a valid image.")
-
     try:
-        # Read the image using PIL (supports PNG)
-        image = Image.open(uploaded_file).convert("RGB")
-        img = np.array(image)  # Convert PIL image to NumPy array
-
-        # Ensure image has 3 dimensions (RGB)
-        if len(img.shape) == 3:
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)  # Convert RGB to BGR
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convert to grayscale
-        elif len(img.shape) == 2:
-            gray = img  # Already grayscale
+        # 🔹 Handle both file uploads and NumPy arrays
+        if isinstance(uploaded_file, np.ndarray):
+            img = uploaded_file  # If already a NumPy array, use directly
         else:
-            raise ValueError("Unsupported image format.")
+            image = Image.open(uploaded_file).convert("RGB")  # Open as RGB
+            img = np.array(image)  # Convert to NumPy array
 
-        # Apply Gaussian Blur
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        # 🔹 Ensure image has correct shape
+        if len(img.shape) == 3:  # RGB image
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)  # Convert to grayscale
+        elif len(img.shape) == 2:  # Already grayscale
+            pass
+        else:
+            raise ValueError("❌ Unsupported image format. Please upload a valid image.")
 
-        # Apply Adaptive Thresholding
-        thresh = cv2.adaptiveThreshold(
-            blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY_INV, 11, 2
-        )
+        # 🔹 Apply preprocessing steps
+        blurred = cv2.GaussianBlur(img, (5, 5), 0)
+        _, thresh = cv2.threshold(blurred, 120, 255, cv2.THRESH_BINARY_INV)
 
-        # **Ensure thresh is 2D**
+        # 🔹 Ensure `thresh` is 2D
         if len(thresh.shape) != 2:
-            raise ValueError("Thresholded image is not 2D. Check preprocessing.")
+            raise ValueError("❌ Preprocessed image is not 2D.")
 
         return thresh  # Return the preprocessed image
 
