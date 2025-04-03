@@ -77,11 +77,24 @@ feature_descriptions = {
 
 # --- Preprocessing ---
 def preprocess_image(img):
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    _, thresh = cv2.threshold(blurred, 120, 255, cv2.THRESH_BINARY_INV)
-    return thresh
+    # Ensure the image is read correctly
+    if img is None:
+        raise ValueError("Error: Image not loaded correctly. Please check the file path or upload.")
 
+    # Convert to grayscale if not already
+    if len(img.shape) == 3:  # If it's a color image (3 channels)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # Apply Gaussian Blur
+    blurred = cv2.GaussianBlur(img, (5, 5), 0)
+
+    # Apply Adaptive Thresholding for better feature extraction
+    thresh = cv2.adaptiveThreshold(
+        blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+        cv2.THRESH_BINARY_INV, 11, 2
+    )
+
+    return thresh
 # --- Baseline Angle ---
 def estimate_baseline_angle(thresh):
     edges = cv2.Canny(thresh, 50, 150, apertureSize=3)
