@@ -79,29 +79,37 @@ feature_descriptions = {
 import cv2
 import numpy as np
 
-def preprocess_image(img):
-    # Ensure the image is loaded
-    if img is None:
-        raise ValueError("❌ Error: Image not loaded. Please check the file path or upload a valid image.")
+def preprocess_image(uploaded_file):
+    # Ensure the uploaded file is valid
+    if uploaded_file is None:
+        raise ValueError("❌ Error: No image uploaded. Please upload a valid image.")
 
-    # Convert from Streamlit file uploader format (if needed)
-    if not isinstance(img, np.ndarray):  
-        img = np.array(img)
+    # Convert image to OpenCV format
+    try:
+        # Read the image using PIL (for compatibility with PNG files)
+        image = Image.open(uploaded_file).convert("RGB")
+        img = np.array(image)  # Convert PIL image to NumPy array
 
-    # Ensure image is 2D (grayscale) or 3D (color)
-    if len(img.shape) == 3:  # If it's a color image (3 channels)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # OpenCV expects BGR format, so we need to convert RGB → BGR
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-    # Apply Gaussian Blur
-    blurred = cv2.GaussianBlur(img, (5, 5), 0)
+        # Convert to grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Adaptive Thresholding for better feature extraction
-    thresh = cv2.adaptiveThreshold(
-        blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-        cv2.THRESH_BINARY_INV, 11, 2
-    )
+        # Apply Gaussian Blur
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
-    return thresh
+        # Apply Adaptive Thresholding
+        thresh = cv2.adaptiveThreshold(
+            blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY_INV, 11, 2
+        )
+
+        return thresh  # Return the preprocessed image
+
+    except Exception as e:
+        st.error(f"❌ Error while processing the image: {str(e)}")
+        return None
 
 # --- Baseline Angle ---
 def estimate_baseline_angle(thresh):
