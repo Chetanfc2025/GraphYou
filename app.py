@@ -159,7 +159,7 @@ uploaded_file = st.file_uploader("📤 Upload a handwriting sample (JPG, PNG)", 
 
 if uploaded_file:
     image = np.array(Image.open(uploaded_file))
-    st.image(image, caption="📸 Uploaded Handwriting Sample", use_column_width=True)
+    st.image(image, caption="📸 Uploaded Handwriting Sample", use_container_width=True)
 
     features = extract_all_features(image)
     feature_values = np.array([[features['baseline_angle'],
