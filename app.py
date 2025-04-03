@@ -78,23 +78,27 @@ feature_descriptions = {
 # --- Preprocessing ---
 import cv2
 import numpy as np
+import streamlit as st
+from PIL import Image
 
 def preprocess_image(uploaded_file):
     # Ensure the uploaded file is valid
     if uploaded_file is None:
         raise ValueError("❌ Error: No image uploaded. Please upload a valid image.")
 
-    # Convert image to OpenCV format
     try:
-        # Read the image using PIL (for compatibility with PNG files)
+        # Read the image using PIL (supports PNG)
         image = Image.open(uploaded_file).convert("RGB")
         img = np.array(image)  # Convert PIL image to NumPy array
 
-        # OpenCV expects BGR format, so we need to convert RGB → BGR
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-
-        # Convert to grayscale
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # Ensure image has 3 dimensions (RGB)
+        if len(img.shape) == 3:
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)  # Convert RGB to BGR
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convert to grayscale
+        elif len(img.shape) == 2:
+            gray = img  # Already grayscale
+        else:
+            raise ValueError("Unsupported image format.")
 
         # Apply Gaussian Blur
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -104,6 +108,10 @@ def preprocess_image(uploaded_file):
             blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             cv2.THRESH_BINARY_INV, 11, 2
         )
+
+        # **Ensure thresh is 2D**
+        if len(thresh.shape) != 2:
+            raise ValueError("Thresholded image is not 2D. Check preprocessing.")
 
         return thresh  # Return the preprocessed image
 
