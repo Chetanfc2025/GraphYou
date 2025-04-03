@@ -80,7 +80,6 @@ import cv2
 import numpy as np
 import streamlit as st
 from PIL import Image
-
 import cv2
 import numpy as np
 import streamlit as st
@@ -88,34 +87,30 @@ from PIL import Image
 
 def preprocess_image(uploaded_file):
     try:
-        # 🔹 Handle both file uploads and NumPy arrays
-        if isinstance(uploaded_file, np.ndarray):
-            img = uploaded_file  # If already a NumPy array, use directly
-        else:
-            image = Image.open(uploaded_file).convert("RGB")  # Open as RGB
-            img = np.array(image)  # Convert to NumPy array
+        # 🔹 Load image using PIL
+        image = Image.open(uploaded_file)
 
-        # 🔹 Ensure image has correct shape
-        if len(img.shape) == 3:  # RGB image
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)  # Convert to grayscale
-        elif len(img.shape) == 2:  # Already grayscale
-            pass
-        else:
-            raise ValueError("❌ Unsupported image format. Please upload a valid image.")
+        # 🔹 Convert to RGB (removes alpha for PNGs)
+        image = image.convert("RGB")
 
-        # 🔹 Apply preprocessing steps
-        blurred = cv2.GaussianBlur(img, (5, 5), 0)
+        # 🔹 Convert to NumPy array
+        img = np.array(image)
+
+        # 🔹 Convert to grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+        # 🔹 Apply Gaussian blur
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
+        # 🔹 Apply thresholding
         _, thresh = cv2.threshold(blurred, 120, 255, cv2.THRESH_BINARY_INV)
 
-        # 🔹 Ensure `thresh` is 2D
-        if len(thresh.shape) != 2:
-            raise ValueError("❌ Preprocessed image is not 2D.")
-
-        return thresh  # Return the preprocessed image
+        return thresh  # Return preprocessed image
 
     except Exception as e:
         st.error(f"❌ Error while processing the image: {str(e)}")
         return None
+
 
 # --- Baseline Angle ---
 def estimate_baseline_angle(thresh):
